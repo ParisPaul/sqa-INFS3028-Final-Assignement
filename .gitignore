@@ -1,0 +1,8 @@
+# Coverage Files
+*.gcov
+
+# Fill after
+*.pyc
+.vscode/*
+.cassandraWorkbench/*
+.coverage
