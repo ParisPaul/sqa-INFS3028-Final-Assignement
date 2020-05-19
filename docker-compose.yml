@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  sqa-survey:
+    build: 
+      context: ./build/
+      dockerfile: Dockerfile
+    volumes:
+      - ./SQA_Survey:/code
+    ports:
+      - "8000:8000"
