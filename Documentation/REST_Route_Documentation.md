@@ -365,3 +365,39 @@
     }
     ```
 ---
+
+**Get all survey response**
+----
+  Get all survey responses from one survey
+* **URL**
+
+  `survey_response/<str:survey_name>/`
+
+* **Method:**
+
+  `GET`
+
+* **URI Params**
+
+  survey_name: (string)
+
+* **Success Response:**
+
+  * **Code:** 200 OK <br />
+    **Content:** 
+    ```
+    {
+    'survey_responses': [(survey_response), ...]
+    ```
+ 
+* **Error Response:**
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** Survey does not exist <br />
+    **Content:**
+    ```
+    {
+        'error': 'survey does not exist, name may be wrong'
+    }
+    ```
+---

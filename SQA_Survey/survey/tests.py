@@ -399,11 +399,6 @@ class SurveyResponseUPDATATests(APITestCase):
                 'question_text': question
             }
             self.client.post(reverse('QuestionView'), data, format='json')
-        data = {
-            'survey_name': 'test_dummy'
-        }
-        self.client.post(reverse('SurveyResponseView'), data, formet='json')
-
         self.url = reverse('SurveyResponseView')
 
     # Called after executing each test
@@ -413,8 +408,13 @@ class SurveyResponseUPDATATests(APITestCase):
     # Ensure the route works as intended
     def test_success_update_survey_data(self):
         data = {
+            'survey_name': 'test_dummy'
+        }
+        time_response = self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        data = {
             'survey_response': {
-                'id': '0',
+                'id': time_response.data['id'],
                 'survey_name': 'test_dummy',
                 'description': 'Each questions can be answered with a number between 1 and 5 included.',
                 'questions': {
@@ -434,7 +434,7 @@ class SurveyResponseUPDATATests(APITestCase):
         response = self.client.patch(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {
-            'id': '0',
+            'id': time_response.data['id'],
             'survey_name': 'test_dummy',
             'description': 'Each questions can be answered with a number between 1 and 5 included.',
             'questions': {
@@ -463,8 +463,13 @@ class SurveyResponseUPDATATests(APITestCase):
     # Ensure the route returns 400 when the survey does not exist
     def test_fail_survey_does_not_exist(self):
         data = {
+            'survey_name': 'test_dummy'
+        }
+        time_response = self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        data = {
             'survey_response': {
-                'id': '0',
+                'id': time_response.data['id'],
                 'survey_name': 'nope',
                 'description': 'Each questions can be answered with a number between 1 and 5 included.',
                 'questions': {
@@ -517,8 +522,13 @@ class SurveyResponseUPDATATests(APITestCase):
     # Ensure the route return 400 if one question was mofified in the json
     def test_fail_question_replaced(self):
         data = {
+            'survey_name': 'test_dummy'
+        }
+        time_response = self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        data = {
             'survey_response': {
-                'id': '0',
+                'id': time_response.data['id'],
                 'survey_name': 'test_dummy',
                 'description': 'Each questions can be answered with a number between 1 and 5 included.',
                 'questions': {
@@ -544,8 +554,13 @@ class SurveyResponseUPDATATests(APITestCase):
     # Ensure the route return 400 if one question was mofified in the json
     def test_fail_question_replaced_2(self):
         data = {
+            'survey_name': 'test_dummy'
+        }
+        time_response = self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        data = {
             'survey_response': {
-                'id': '0',
+                'id': time_response.data['id'],
                 'survey_name': 'test_dummy',
                 'description': 'Each questions can be answered with a number between 1 and 5 included.',
                 'questions': {
@@ -568,8 +583,13 @@ class SurveyResponseUPDATATests(APITestCase):
     # Ensure the route return 400 if the number is not between 1 and 5 included
     def test_fail_question_replaced_3(self):
         data = {
+            'survey_name': 'test_dummy'
+        }
+        time_response = self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        data = {
             'survey_response': {
-                'id': '0',
+                'id': time_response.data['id'],
                 'survey_name': 'test_dummy',
                 'description': 'Each questions can be answered with a number between 1 and 5 included.',
                 'questions': {
@@ -592,8 +612,13 @@ class SurveyResponseUPDATATests(APITestCase):
     # Ensure the route return 400 if the number is not between 1 and 5 included
     def test_fail_question_replaced_4(self):
         data = {
+            'survey_name': 'test_dummy'
+        }
+        time_response = self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        data = {
             'survey_response': {
-                'id': '0',
+                'id': time_response.data['id'],
                 'survey_name': 'test_dummy',
                 'description': 'Each questions can be answered with a number between 1 and 5 included.',
                 'questions': {
@@ -613,6 +638,149 @@ class SurveyResponseUPDATATests(APITestCase):
             'error': "the question '10 ?' does not exist OR the number is not between 1 and 5"
     })
 
+
+# Testing class that execute the following tests
+# - Test if GET works as intended
+# - Test if the server does not exist
+class SurveyResponseGETTests(APITestCase):
+
+    # Called before executing each test
+    def setUp(self):
+        # Creating dummy data
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        self.client.post(reverse('SurveyView'), data, format='json')
+        questions = ['1 ?', '2 ?', '3 ?', '4 ?', '5 ?', '6 ?', '7 ?', '8 ?', '9 ?', '10 ?']
+        for question in questions:
+            data = {
+                'survey_name': 'test_dummy',
+                'question_text': question
+            }
+            self.client.post(reverse('QuestionView'), data, format='json')
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        self.response_time_1 = (self.client.post(reverse('SurveyResponseView'), data, formet='json')).data['id']
+        self.response_time_2 = (self.client.post(reverse('SurveyResponseView'), data, formet='json')).data['id']
+        self.response_time_3 = (self.client.post(reverse('SurveyResponseView'), data, formet='json')).data['id']
+
+        self.url = reverse('SurveyResponseView')
+
+        data = {
+            'survey_response': {
+                'id': self.response_time_1,
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '2 ?': 5,
+                    '3 ?': 3,
+                    '4 ?': 2,
+                    '5 ?': 3,
+                    '6 ?': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        self.client.patch(self.url, data, format='json')
+        data = {
+            'survey_response': {
+                'id': self.response_time_2,
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '5 ?': 3,
+                    '6 ?': 1,
+                    '7 ?': 5,
+                    '8 ?': 1,
+                    '9 ?': 5,
+                    '10 ?': 1
+                }
+            }
+        }
+        self.client.patch(self.url, data, format='json')
+        data = {
+            'survey_response': {
+                'id': self.response_time_3,
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '2 ?': 5,
+                    '3 ?': 1,
+                    '4 ?': 3,
+                    '5 ?': 3,
+                    '10 ?': 1
+                }
+            }
+        }
+        self.client.patch(self.url, data, format='json')
+
+    # Called after executing each test
+    def tearDown(self):
+        self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
+
+    # Ensure the GET route works as intended
+    def test_success_get_all(self):
+        response = self.client.get(reverse('SurveyResponseView', kwargs={'survey_name': 'test_dummy'}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {
+        'survey_responses': [
+            {
+            'id': self.response_time_1,
+            'survey_name': 'test_dummy',
+            'description': 'Each questions can be answered with a number between 1 and 5 included.',
+            'questions': {
+                '1 ?': 1,
+                '2 ?': 5,
+                '3 ?': 3,
+                '4 ?': 2,
+                '5 ?': 3,
+                '6 ?': 1,
+                '7 ?': 5,
+                '8 ?': 3,
+                '9 ?': 2,
+                '10 ?': 1
+            }
+            },
+            {
+            'id': self.response_time_2,
+            'survey_name': 'test_dummy',
+            'description': 'Each questions can be answered with a number between 1 and 5 included.',
+            'questions': {
+                '5 ?': 3,
+                '6 ?': 1,
+                '7 ?': 5,
+                '8 ?': 1,
+                '9 ?': 5,
+                '10 ?': 1
+            }
+            },
+            {
+            'id': self.response_time_3,
+            'survey_name': 'test_dummy',
+            'description': 'Each questions can be answered with a number between 1 and 5 included.',
+            'questions': {
+                '1 ?': 1,
+                '2 ?': 5,
+                '3 ?': 1,
+                '4 ?': 3,
+                '5 ?': 3,
+                '10 ?': 1
+            }
+            }
+        ]
+        })
+
+    # Ensure the route returns 400 when the survey does not exist
+    def test_fail_survey_does_not_exist(self):
+        response = self.client.get(reverse('SurveyResponseView', kwargs={'survey_name': 'nope'}))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'error': 'survey does not exist'})
 
 # Testing class that execute the following tests
 # - Test if DELETE works as intended

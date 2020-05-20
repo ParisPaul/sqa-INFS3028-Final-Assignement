@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from statistics import stdev
+import time
 import json
 
 # Global variable storing the surveys
@@ -149,7 +150,6 @@ class QuestionView(APIView):
 class SurveyResponseView(APIView):
 
     global surveys
-    id = 0
 
     # Create a survey response
     def post(self, request, format=None):
@@ -172,17 +172,17 @@ class SurveyResponseView(APIView):
             }
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
         response = {
-            'id': self.id,
+            'id': str(round(time.time() * 1000)),
             'survey_name': survey_name,
             'description': 'Each questions can be answered with a number between 1 and 5 included.',
             'questions': {}
         }
-        self.id += 1
         for question in surveys[survey_index]['questions']:
             response['questions'][question['question']] = None
         surveys[survey_index]['responses'].append(response)
         return Response(response, status=status.HTTP_201_CREATED)
 
+    # Update the survey response
     def patch(self, request, format=None):
         try:
             survey_response = request.data['survey_response']
@@ -216,6 +216,21 @@ class SurveyResponseView(APIView):
         response = surveys[survey_index]['responses'][survey_response_index]
         return Response(response, status=status.HTTP_200_OK)
 
+    # Get all survey responses from one survey
+    def get(self, request, survey_name, format=None):
+        survey_index = self.findSurveyIndex(survey_name)
+        if survey_index == None:
+            response = {
+                'error': 'survey does not exist'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        resp = {
+            'survey_responses': []
+        }
+        for response in surveys[survey_index]['responses']:
+            resp['survey_responses'].append(response)
+        return Response(resp, status=status.HTTP_200_OK)
+
     # Function to find any survey from their name
     def findSurveyIndex(self, name):
         for index, survey in enumerate(surveys):
@@ -226,7 +241,7 @@ class SurveyResponseView(APIView):
     # Function to find any survey response with the id
     def findSurveyResponseIndex(self, id, survey_index):
         for index, response in enumerate(surveys[survey_index]['responses']):
-            if int(response['id']) == int(id):
+            if response['id'] == id:
                 return index
         return None
     
@@ -245,19 +260,22 @@ class SurveyResponseView(APIView):
             questions_stat[question['question']] = []
         for response in surveys[survey_index]['responses']:
             for resp, value in response['questions'].items():
-                questions_stat[resp].append(int(value))
-                survey_stat.append(int(value))
+                if isinstance(value, int) or isinstance(value, str):
+                    questions_stat[resp].append(int(value))
+                    survey_stat.append(int(value))
         for index, question in enumerate(surveys[survey_index]['questions']):
-            surveys[survey_index]['questions'][index]['average'] = sum(questions_stat[question['question']]) / len(questions_stat[question['question']])
+            if len(questions_stat[question['question']]) != 0:
+                surveys[survey_index]['questions'][index]['average'] = sum(questions_stat[question['question']]) / len(questions_stat[question['question']])
+                surveys[survey_index]['questions'][index]['minimum'] = min(questions_stat[question['question']])
+                surveys[survey_index]['questions'][index]['maximum'] = max(questions_stat[question['question']])
             if len(questions_stat[question['question']]) >= 2:
                 surveys[survey_index]['questions'][index]['standard_deviation'] = stdev(questions_stat[question['question']])
-            surveys[survey_index]['questions'][index]['minimum'] = min(questions_stat[question['question']])
-            surveys[survey_index]['questions'][index]['maximum'] = max(questions_stat[question['question']])
-        surveys[survey_index]['average'] = sum(survey_stat) / len(survey_stat)
+        if len(survey_stat) != 0:
+            surveys[survey_index]['average'] = sum(survey_stat) / len(survey_stat)
+            surveys[survey_index]['minimum'] = min(survey_stat)
+            surveys[survey_index]['maximum'] = max(survey_stat)
         if len(survey_stat) >= 2:
             surveys[survey_index]['standard_deviation'] = stdev(survey_stat)
-        surveys[survey_index]['minimum'] = min(survey_stat)
-        surveys[survey_index]['maximum'] = max(survey_stat)
 
 
 # View that handles the following routes:
