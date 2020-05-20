@@ -31,6 +31,7 @@ class SurveyView(APIView):
             {
                 'name': survey_name,
                 'questions': [],
+                'responses': [],
                 'average': None,
                 'standard_deviation': None,
                 'minimum': None,
@@ -117,7 +118,6 @@ class QuestionView(APIView):
         surveys[survey_index]['questions'].append(
             {
                 'question': question_text,
-                'answers': [],
                 'average': None,
                 'standard_deviation': None,
                 'minimum': None,
@@ -138,6 +138,52 @@ class QuestionView(APIView):
     def findQuestionIndex(self, survey_index, question_text):
         for index, question in enumerate(surveys[survey_index]['questions']):
             if question['question'] == question_text:
+                return index
+        return None
+
+# View that handles the following routes:
+# - POST: Create a survey response linked to the desired survey
+# - UPDATE: Add answer to one of the questions
+# - GET: Get all survey responses from a desired survey
+class SurveyResponseView(APIView):
+
+    global surveys
+
+    # Create a survey response
+    def post(self, request, format=None):
+        try:
+            survey_name = request.data['survey_name']
+        except KeyError as e:
+            response = {
+                'error': str(e) + ' has to be a data param'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        survey_index = self.findSurveyIndex(survey_name)
+        if survey_index == None:
+            response = {
+                'error': 'survey does not exist'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        if len(surveys[survey_index]['questions']) == 0:
+            response = {
+                'error': 'this survey has no questions'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        uuid = uuid4()
+        response = {
+            'uuid': uuid,
+            'survey_name': survey_name
+        }
+        for question in surveys[survey_index]['questions']:
+            response[question['question']] = None
+        surveys[survey_index]['responses'].append(response)
+        return Response(response, status=status.HTTP_201_CREATED)
+
+
+    # Function to find any survey from their name
+    def findSurveyIndex(self, name):
+        for index, survey in enumerate(surveys):
+            if survey['name'] == name:
                 return index
         return None
 

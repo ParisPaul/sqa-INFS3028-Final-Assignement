@@ -15,6 +15,7 @@ class SurveyPOSTTests(APITestCase):
         self.reference_data = {
             'name': 'test_dummy',
             'questions': [],
+            'responses': [],
             'average': None,
             'standard_deviation': None,
             'minimum': None,
@@ -125,6 +126,7 @@ class SurveyGETTest(APITestCase):
         self.assertEqual(response.data, {
             'name': 'survey_1',
             'questions': [],
+            'responses': [],
             'average': None,
             'standard_deviation': None,
             'minimum': None,
@@ -164,7 +166,6 @@ class QuestionPOSTTests(APITestCase):
 
         self.reference_data = {
             "question": "Do you like testing ?",
-            "answers": [],
             "average": None,
             "standard_deviation": None,
             "minimum": None,
@@ -275,7 +276,6 @@ class QuestionPOSTTests(APITestCase):
             }
             reference_data = {
                 "question": question,
-                "answers": [],
                 "average": None,
                 "standard_deviation": None,
                 "minimum": None,
@@ -299,6 +299,83 @@ class QuestionPOSTTests(APITestCase):
 
 
 # Testing class that execute the following tests
+# - Test if POST works as intended
+# - Test if the survey exist
+# - Test if there are questions to answer
+# - Test if there is no argument
+class SurveyResponsePOSTTests(APITestCase):
+
+    def setUp(self):
+        # Creating dummy data
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        self.client.post(reverse('SurveyView'), data, format='json')
+        questions = ['1 ?', '2 ?', '3 ?', '4 ?', '5 ?', '6 ?', '7 ?', '8 ?', '9 ?', '10 ?']
+        for question in questions:
+            data = {
+                'survey_name': 'test_dummy',
+                'question_text': question
+            }
+            self.client.post(reverse('QuestionView'), data, format='json')
+
+        self.url = reverse('SurveyResponseView')
+
+    # Called after executing each test
+    def tearDown(self):
+        self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
+
+    # Ensure the route works properly
+    def test_success_create_survey_response(self):
+        # Testing
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        response = self.client.post(self.url, data, formet='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    
+    # Ensure the route returns 400 when the survey does not exist
+    def test_fail_survey_does_not_exist(self):
+        # Testing
+        data = {
+            'survey_name': 'Hello_world'
+        }
+        response = self.client.post(self.url, data, formet='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': 'survey does not exist'
+        })
+    
+    # Ensure the route returns 400 when there is no questions to answer
+    def test_fail_no_question(self):
+        # Create dummy data
+        data = {
+            'survey_name': 'Hello_World'
+        }
+        self.client.post(reverse('SurveyView'), data, format='json')
+
+        #Testing
+        data = {
+            'survey_name': 'Hello_World'
+        }
+        response = self.client.post(self.url, data, formet='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': 'this survey has no questions'
+        })
+    
+    # Ensure the route returns 400 when there is no argument given
+    def test_fail_no_argument(self):
+        #Testing
+        data = {}
+        response = self.client.post(self.url, data, formet='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "'survey_name' has to be a data param"
+        })
+
+
+# Testing class that execute the following tests
 # - Test if DELETE works as intended
 class TestingHelpDELETETests(APITestCase):
 
@@ -307,6 +384,7 @@ class TestingHelpDELETETests(APITestCase):
         self.reference_data = {
             'name': 'test_dummy',
             'questions': [],
+            'responses': [],
             'average': None,
             'standard_deviation': None,
             'minimum': None,

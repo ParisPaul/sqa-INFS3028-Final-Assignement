@@ -211,3 +211,68 @@
     }
     ```
 ---
+
+**Create Survey Response**
+----
+  Create a survey response for a desired survey
+
+* **URL**
+
+  `survey_response/`
+
+* **Method:**
+
+  `POST`
+
+* **Data Params**
+
+  ```
+  {
+    "survey_name": (name)
+  }
+  ```
+* **Success Response:**
+
+  * **Code:** 201 CREATED <br />
+    **Content:** 
+    ```
+    {
+        'survey_name': (name),
+        'uuid': (uuid),
+        questions....
+    }
+    ```
+ 
+* **Error Response:**
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** 'survey_name' not passed as data params <br />
+    **Content:**
+    ```
+    {
+        'error': "'survey_name' has to be a data param"
+    }
+    ```
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** The desired survey does not exist <br />
+    **Content:**
+    ```
+    {
+        'error': 'survey does not exist'
+    }
+    ```
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** When there is no questions in the survey <br />
+    **Content:**
+    ```
+    {
+        'error': 'this survey has no questions'
+    }
+    ```
+---
