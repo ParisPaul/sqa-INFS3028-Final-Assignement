@@ -49,6 +49,30 @@ class SurveyView(APIView):
             response['surveys'].append(survey['name'])
         return Response(response, status=status.HTTP_200_OK)
 
+    # Function to find any survey from their name
+    def findSurveyIndex(self, name):
+        for index, survey in enumerate(surveys):
+            if survey['name'] == name:
+                return index
+        return None
+
+
+# View that handles the following routes:
+# - GET: get all information about one servey
+class ComplementSurveyView(APIView):
+
+    global surveys
+
+    # Return the survey object of the desired survey
+    def get(self, request, survey_name, format=None):
+        survey_index = self.findSurveyIndex(survey_name)
+        if survey_index == None:
+            response = {
+                'error': 'survey does not exist'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        response = surveys[survey_index]
+        return Response(response, status=status.HTTP_200_OK)
 
     # Function to find any survey from their name
     def findSurveyIndex(self, name):
@@ -56,6 +80,7 @@ class SurveyView(APIView):
             if survey['name'] == name:
                 return index
         return None
+
 
 # View that handles the following routes:
 # - POST: Create and add a question to an existing survey

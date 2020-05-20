@@ -78,6 +78,49 @@
     ```
 ---
 
+**Get one survey**
+----
+  Get all information about a survey
+
+* **URL**
+
+  `survey/<str:survey_name>/`
+
+* **Method:**
+
+  `GET`
+
+* **URI Params**
+
+  survey_name: (string)
+
+* **Success Response:**
+
+  * **Code:** 200 OK <br />
+    **Content:** 
+    ```
+    {
+        'name': (survey_name),
+        'questions': [],
+        'average': None,
+        'standard_deviation': None,
+        'minimum': None,
+        'maximum': None
+    }
+    ```
+ 
+* **Error Response:**
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** A survey with the 'survey_name' does not exist <br />
+    **Content:**
+    ```
+    {
+        'error': 'survey does not exist'
+    }
+    ```
+---
+
 **Create Question**
 ----
   Create and add a question inside an existing survey

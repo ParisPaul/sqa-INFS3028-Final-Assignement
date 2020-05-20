@@ -67,6 +67,10 @@ class SurveyPOSTTests(APITestCase):
         )
 
 
+# Testing class that execute the following tests
+# - Test if GET all survey work as intended
+# - Test if GET one survey work as inteded
+# - Test if the survey does not exist
 class SurveyGETTest(APITestCase):
 
     # Called before executing each test
@@ -88,16 +92,16 @@ class SurveyGETTest(APITestCase):
             "maximum": None
         }
 
-        self.url = reverse('SurveyView')
+        self.url_get_all = reverse('SurveyView')
 
     # Called after executing each test
     def tearDown(self):
         self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
 
-    # Ensure that the route is working as intended
+    # Ensure that the get all survey route is working as intended
     def test_sucess_list(self):
         # Testing
-        response = self.client.get(self.url, kwargs={}, format='json')
+        response = self.client.get(self.url_get_all, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {
             'surveys': [
@@ -107,6 +111,35 @@ class SurveyGETTest(APITestCase):
                 'survey_4',
                 'survey_5'
                 ]
+            }
+        )
+
+    # Ensure that the Get one survey route works as entended
+    def test_success_one_survey(self):
+        # Testing
+        data = {
+            'survey_name': 'survey_1'
+        }
+        response = self.client.get(reverse('SurveyGETOneView', kwargs=data), format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {
+            'name': 'survey_1',
+            'questions': [],
+            'average': None,
+            'standard_deviation': None,
+            'minimum': None,
+            'maximum': None
+        })
+    
+    def test_fail_survey_does_not_exist(self):
+        # Testing
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        response = self.client.get(reverse('SurveyGETOneView', kwargs=data), format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+                'error': 'survey does not exist'
             }
         )
 
