@@ -1,5 +1,7 @@
 # Demonstrating Software Quality
 
+Paul Paris - D19124166 - DT301A
+
 ## How to launch the application
 As we are using Docker, it is easy to launch all you need is docker, you can find the installation details at the following links:
 - [windows](https://hub.docker.com/editions/community/docker-ce-desktop-windows)
