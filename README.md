@@ -46,6 +46,7 @@ This [link](https://github.com/ParisPaul/sqa-INFS3028-Final-Assignement/commit/5
 In order to evalute the test coverage of the code we have produced, I have decided to use 'coverage' a python dependence that does just that. Here is the installation [link](https://coverage.readthedocs.io/en/coverage-5.1/).
 
 In the following image you can see that on views.py, where we have done our route intelligence, 100% of the code is covered, meaning all lines are executed during testing.
+
 ![alt text](./Documentation/Capture.JPG)
 
 > For the asgi.py, wsgi.py and manage.py, these are django files, not files that I coded in.
