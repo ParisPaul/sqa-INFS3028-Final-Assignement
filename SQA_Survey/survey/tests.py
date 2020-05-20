@@ -305,6 +305,7 @@ class QuestionPOSTTests(APITestCase):
 # - Test if there is no argument
 class SurveyResponsePOSTTests(APITestCase):
 
+    # Called before executing each test
     def setUp(self):
         # Creating dummy data
         data = {
@@ -373,6 +374,244 @@ class SurveyResponsePOSTTests(APITestCase):
         self.assertEqual(response.data, {
             'error': "'survey_name' has to be a data param"
         })
+
+
+# Testing class that execute the following tests
+# - Test if UPDATE works as intended
+# - Test if there is no param
+# - Test if survey does not exist
+# - Test if survey_response does not exist
+# - Test if there is a question that is not supposed to be there or has been modified
+# - Test if the questions have been answered with a number between 1 and 5
+class SurveyResponseUPDATATests(APITestCase):
+
+    # Called before executing each test
+    def setUp(self):
+        # Creating dummy data
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        self.client.post(reverse('SurveyView'), data, format='json')
+        questions = ['1 ?', '2 ?', '3 ?', '4 ?', '5 ?', '6 ?', '7 ?', '8 ?', '9 ?', '10 ?']
+        for question in questions:
+            data = {
+                'survey_name': 'test_dummy',
+                'question_text': question
+            }
+            self.client.post(reverse('QuestionView'), data, format='json')
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        self.client.post(reverse('SurveyResponseView'), data, formet='json')
+
+        self.url = reverse('SurveyResponseView')
+
+    # Called after executing each test
+    def tearDown(self):
+        self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
+    
+    # Ensure the route works as intended
+    def test_success_update_survey_data(self):
+        data = {
+            'survey_response': {
+                'id': '0',
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '2 ?': 5,
+                    '3 ?': 3,
+                    '4 ?': 2,
+                    '5 ?': 3,
+                    '6 ?': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {
+            'id': '0',
+            'survey_name': 'test_dummy',
+            'description': 'Each questions can be answered with a number between 1 and 5 included.',
+            'questions': {
+                '1 ?': 1,
+                '2 ?': 5,
+                '3 ?': 3,
+                '4 ?': 2,
+                '5 ?': 3,
+                '6 ?': 1,
+                '7 ?': 5,
+                '8 ?': 3,
+                '9 ?': 2,
+                '10 ?': 1
+            }
+        })
+
+    # Ensure the route returns 400 when there is no param
+    def test_fail_no_param(self):
+        data = {}
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "'survey_response' has to be a data param"
+        })
+
+    # Ensure the route returns 400 when the survey does not exist
+    def test_fail_survey_does_not_exist(self):
+        data = {
+            'survey_response': {
+                'id': '0',
+                'survey_name': 'nope',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '2 ?': 5,
+                    '3 ?': 3,
+                    '4 ?': 2,
+                    '5 ?': 3,
+                    'This is wrong': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': 'survey does not exist, name may be wrong'
+        })
+
+    # Ensure the route returns 400 when the survey response id could not be match, meaning the survey response does not exist
+    def test_fail_survey_response_does_not_exist(self):
+        data = {
+            'survey_response': {
+                'id': '-1',
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '2 ?': 5,
+                    '3 ?': 3,
+                    '4 ?': 2,
+                    '5 ?': 3,
+                    'This is wrong': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': 'survey response does not exist, it may be wrong'
+        })
+
+    # Ensure the route return 400 if one question was mofified in the json
+    def test_fail_question_replaced(self):
+        data = {
+            'survey_response': {
+                'id': '0',
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '2 ?': 5,
+                    '3 ?': 3,
+                    '4 ?': 2,
+                    '5 ?': 3,
+                    'This is wrong': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "the question 'This is wrong' does not exist OR the number is not between 1 and 5"
+        })
+
+    # Ensure the route return 400 if one question was mofified in the json
+    def test_fail_question_replaced_2(self):
+        data = {
+            'survey_response': {
+                'id': '0',
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '5 ?': 3,
+                    'This is wrong': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "the question 'This is wrong' does not exist OR the number is not between 1 and 5"
+        })
+
+    # Ensure the route return 400 if the number is not between 1 and 5 included
+    def test_fail_question_replaced_3(self):
+        data = {
+            'survey_response': {
+                'id': '0',
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '5 ?': 3,
+                    '6 ?': 1,
+                    '7 ?': 8,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': 1
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "the question '7 ?' does not exist OR the number is not between 1 and 5"
+        })
+
+    # Ensure the route return 400 if the number is not between 1 and 5 included
+    def test_fail_question_replaced_4(self):
+        data = {
+            'survey_response': {
+                'id': '0',
+                'survey_name': 'test_dummy',
+                'description': 'Each questions can be answered with a number between 1 and 5 included.',
+                'questions': {
+                    '1 ?': 1,
+                    '5 ?': 3,
+                    '6 ?': 1,
+                    '7 ?': 5,
+                    '8 ?': 3,
+                    '9 ?': 2,
+                    '10 ?': -543
+                }
+            }
+        }
+        response = self.client.patch(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "the question '10 ?' does not exist OR the number is not between 1 and 5"
+    })
 
 
 # Testing class that execute the following tests

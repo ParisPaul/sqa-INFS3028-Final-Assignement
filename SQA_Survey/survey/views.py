@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from uuid import uuid4
+from statistics import stdev
+import json
 
 # Global variable storing the surveys
 surveys = []
@@ -148,6 +149,7 @@ class QuestionView(APIView):
 class SurveyResponseView(APIView):
 
     global surveys
+    id = 0
 
     # Create a survey response
     def post(self, request, format=None):
@@ -169,16 +171,50 @@ class SurveyResponseView(APIView):
                 'error': 'this survey has no questions'
             }
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
-        uuid = uuid4()
         response = {
-            'uuid': uuid,
-            'survey_name': survey_name
+            'id': self.id,
+            'survey_name': survey_name,
+            'description': 'Each questions can be answered with a number between 1 and 5 included.',
+            'questions': {}
         }
+        self.id += 1
         for question in surveys[survey_index]['questions']:
-            response[question['question']] = None
+            response['questions'][question['question']] = None
         surveys[survey_index]['responses'].append(response)
         return Response(response, status=status.HTTP_201_CREATED)
 
+    def patch(self, request, format=None):
+        try:
+            survey_response = request.data['survey_response']
+        except KeyError as e:
+            response = {
+                'error': str(e) + ' has to be a data param'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        survey_name = survey_response['survey_name']
+        id = survey_response['id']
+        survey_index = self.findSurveyIndex(survey_name)
+        if survey_index == None:
+            response = {
+                'error': 'survey does not exist, name may be wrong'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        survey_response_index = self.findSurveyResponseIndex(id, survey_index)
+        if survey_response_index == None:
+            response = {
+                'error': 'survey response does not exist, it may be wrong'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        for response, value in survey_response['questions'].items():
+            if self.findQuestionIndex(survey_index, response) == None or value < 1 or value > 5:
+                response = {
+                    'error': 'the question \'' + str(response) +'\' does not exist OR the number is not between 1 and 5'
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        surveys[survey_index]['responses'][survey_response_index] = survey_response
+        self.calculate_stats(survey_index)
+        response = surveys[survey_index]['responses'][survey_response_index]
+        return Response(response, status=status.HTTP_200_OK)
 
     # Function to find any survey from their name
     def findSurveyIndex(self, name):
@@ -186,6 +222,42 @@ class SurveyResponseView(APIView):
             if survey['name'] == name:
                 return index
         return None
+
+    # Function to find any survey response with the id
+    def findSurveyResponseIndex(self, id, survey_index):
+        for index, response in enumerate(surveys[survey_index]['responses']):
+            if int(response['id']) == int(id):
+                return index
+        return None
+    
+    # Function to find any question from their name
+    def findQuestionIndex(self, survey_index, question_text):
+        for index, question in enumerate(surveys[survey_index]['questions']):
+            if str(question['question']) == question_text:
+                return index
+        return None
+    
+    # calculate the stats for each questions and the survey as a whole
+    def calculate_stats(self, survey_index):
+        survey_stat = []
+        questions_stat = dict()
+        for question in surveys[survey_index]['questions']:
+            questions_stat[question['question']] = []
+        for response in surveys[survey_index]['responses']:
+            for resp, value in response['questions'].items():
+                questions_stat[resp].append(int(value))
+                survey_stat.append(int(value))
+        for index, question in enumerate(surveys[survey_index]['questions']):
+            surveys[survey_index]['questions'][index]['average'] = sum(questions_stat[question['question']]) / len(questions_stat[question['question']])
+            if len(questions_stat[question['question']]) >= 2:
+                surveys[survey_index]['questions'][index]['standard_deviation'] = stdev(questions_stat[question['question']])
+            surveys[survey_index]['questions'][index]['minimum'] = min(questions_stat[question['question']])
+            surveys[survey_index]['questions'][index]['maximum'] = max(questions_stat[question['question']])
+        surveys[survey_index]['average'] = sum(survey_stat) / len(survey_stat)
+        if len(survey_stat) >= 2:
+            surveys[survey_index]['standard_deviation'] = stdev(survey_stat)
+        surveys[survey_index]['minimum'] = min(survey_stat)
+        surveys[survey_index]['maximum'] = max(survey_stat)
 
 
 # View that handles the following routes:

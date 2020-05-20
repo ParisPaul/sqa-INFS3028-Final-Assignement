@@ -238,7 +238,7 @@
     ```
     {
         'survey_name': (name),
-        'uuid': (uuid),
+        'id': int,
         questions....
     }
     ```
@@ -273,6 +273,95 @@
     ```
     {
         'error': 'this survey has no questions'
+    }
+    ```
+---
+
+**Update survey response**
+----
+  Once you know the answers you want to submit, you update the survey response and it it will replace in the app with wat you answered
+* **URL**
+
+  `survey_response/`
+
+* **Method:**
+
+  `PATCH`
+
+* **Data Params**
+
+  ```
+  {
+  'survey_response': {
+    'id': '0',
+    'survey_name': (survey_name),
+    'description': 'Each questions can be answered with a number between 1 and 5 included.',
+    'questions': {
+        "(question)": (answer)
+        ...
+      }
+    }
+  }
+  ```
+* **Success Response:**
+
+  * **Code:** 200 CREATED <br />
+    **Content:** 
+    ```
+    {
+    'survey_response': {
+      'id': '0',
+      'survey_name': (survey_name),
+      'description': 'Each questions can be answered with a number between 1 and 5 included.',
+      'questions': {
+          "(question)": (answer)
+          ...
+        }
+      }
+    }
+    ```
+ 
+* **Error Response:**
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** Survey does not exist <br />
+    **Content:**
+    ```
+    {
+        'error': 'survey does not exist, name may be wrong'
+    }
+    ```
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** Survey response does not exist <br />
+    **Content:**
+    ```
+    {
+        'error': 'survey response does not exist, it may be wrong'
+    }
+    ```
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** When a question does not exist or has changed <br />
+    **Content:**
+    ```
+    {
+        'error': "the question '(questio)' does not exist OR the number is not between 1 and 5"
+    }
+    ```
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Cause:** When an answer is not between 1 and 5 included <br />
+    **Content:**
+    ```
+    {
+        'error': "the question '(question)' does not exist OR the number is not between 1 and 5"
     }
     ```
 ---
