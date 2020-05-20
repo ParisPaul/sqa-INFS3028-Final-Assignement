@@ -67,6 +67,58 @@ class SurveyPOSTTests(APITestCase):
         )
 
 
+class SurveyGETTest(APITestCase):
+
+    # Called before executing each test
+    def setUp(self):
+        # Creating dummy data
+        surveys = ['survey_1', 'survey_2', 'survey_3', 'survey_4', 'survey_5']
+        for survey in surveys:
+            data = {
+                'survey_name': survey
+            }
+            self.client.post(reverse('SurveyView'), data, format='json')
+
+        self.reference_data = {
+            "question": "Do you like testing ?",
+            "answers": [],
+            "average": None,
+            "standard_deviation": None,
+            "minimum": None,
+            "maximum": None
+        }
+
+        self.url = reverse('SurveyView')
+
+    # Called after executing each test
+    def tearDown(self):
+        self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
+
+    # Ensure that the route is working as intended
+    def test_sucess_list(self):
+        # Testing
+        response = self.client.get(self.url, kwargs={}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {
+            'surveys': [
+                'survey_1',
+                'survey_2',
+                'survey_3',
+                'survey_4',
+                'survey_5'
+                ]
+            }
+        )
+
+
+# Testing class that execute the following tests
+# - Test if POST work as intended
+# - Test if the 'survey_name' param is not included
+# - Test if the 'question_text' param is not included
+# - Test if no param is not included
+# - Test if the survey does not exist
+# - Test if the question already exist
+# - Test if max question is reached
 class QuestionPOSTTests(APITestCase):
 
     # Called before executing each test
@@ -179,6 +231,7 @@ class QuestionPOSTTests(APITestCase):
             }
         )
     
+    # Ensure route returns 400 when the max number of questions is reached
     def test_fail_max_questions_reached(self):
         # Creating dummy data
         questions = ['1 ?', '2 ?', '3 ?', '4 ?', '5 ?', '6 ?', '7 ?', '8 ?', '9 ?', '10 ?']
@@ -210,6 +263,7 @@ class QuestionPOSTTests(APITestCase):
                 'error': 'you cannot add another question (maximum questions = 10)'
             }
         )
+
 
 # Testing class that execute the following tests
 # - Test if DELETE works as intended

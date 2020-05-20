@@ -55,6 +55,29 @@
     ```
 ---
 
+**Get List Servey**
+----
+  Get a list of the names of all the existing surveys
+
+* **URL**
+
+  `survey/`
+
+* **Method:**
+
+  `GET`
+
+* **Success Response:**
+
+  * **Code:** 200 OK <br />
+    **Content:** 
+    ```
+    {
+        'surveys': []
+    }
+    ```
+---
+
 **Create Question**
 ----
   Create and add a question inside an existing survey

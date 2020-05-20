@@ -8,6 +8,7 @@ surveys = []
 
 # View that handles the following routes:
 # - POST: Create a survey
+# - GET: Get a list of names of all the existing surveys
 class SurveyView(APIView):
 
     global surveys
@@ -39,6 +40,16 @@ class SurveyView(APIView):
         response = surveys[self.findSurveyIndex(survey_name)]
         return Response(response, status=status.HTTP_201_CREATED)
 
+    # Return a list of the names of all surveys
+    def get(self, request, format=None):
+        response = {
+            'surveys': []
+        }
+        for survey in surveys:
+            response['surveys'].append(survey['name'])
+        return Response(response, status=status.HTTP_200_OK)
+
+
     # Function to find any survey from their name
     def findSurveyIndex(self, name):
         for index, survey in enumerate(surveys):
@@ -46,7 +57,8 @@ class SurveyView(APIView):
                 return index
         return None
 
-
+# View that handles the following routes:
+# - POST: Create and add a question to an existing survey
 class QuestionView(APIView):
 
     global surveys
