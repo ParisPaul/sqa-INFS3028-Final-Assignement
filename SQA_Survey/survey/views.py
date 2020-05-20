@@ -21,7 +21,7 @@ class SurveyView(APIView):
                 'error': str(e) + ' has to be a data param'
             }
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
-        if self.findSurvey(survey_name) != None:
+        if self.findSurveyIndex(survey_name) != None:
             response = {
                 'error': 'survey name already exist, please choose a new one'
             }
@@ -36,15 +36,74 @@ class SurveyView(APIView):
                 'maximum': None
             }
         )
-        response = self.findSurvey(survey_name)
+        response = surveys[self.findSurveyIndex(survey_name)]
         return Response(response, status=status.HTTP_201_CREATED)
 
     # Function to find any survey from their name
-    def findSurvey(self, name):
-        for survey in surveys:
+    def findSurveyIndex(self, name):
+        for index, survey in enumerate(surveys):
             if survey['name'] == name:
-                return survey
+                return index
         return None
+
+
+class QuestionView(APIView):
+
+    global surveys
+
+    # Add a question to a given survey
+    def post(self, request, format=None):
+        try:
+            survey_name = request.data['survey_name']
+            question_text = request.data['question_text']
+        except KeyError as e:
+            response = {
+                'error': str(e) + ' has to be a data param'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        survey_index = self.findSurveyIndex(survey_name)
+        if survey_index == None:
+            response = {
+                'error': 'survey does not exist'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        if self.findQuestionIndex(survey_index, question_text) != None:
+            response = {
+                'error': 'question already exist, find a new one'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        if len(surveys[survey_index]['questions']) >= 10:
+            response = {
+                'error': 'you cannot add another question (maximum questions = 10)'
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        surveys[survey_index]['questions'].append(
+            {
+                'question': question_text,
+                'answers': [],
+                'average': None,
+                'standard_deviation': None,
+                'minimum': None,
+                'maximum': None
+            }
+        )
+        response = surveys[survey_index]['questions'][self.findQuestionIndex(survey_index, question_text)]
+        return Response(response, status=status.HTTP_201_CREATED)
+
+    # Function to find any survey from their name
+    def findSurveyIndex(self, name):
+        for index, survey in enumerate(surveys):
+            if survey['name'] == name:
+                return index
+        return None
+    
+    # Function to find any question from their name
+    def findQuestionIndex(self, survey_index, question_text):
+        for index, question in enumerate(surveys[survey_index]['questions']):
+            if question['question'] == question_text:
+                return index
+        return None
+
 
 # View that handles the following routes:
 # - DELETE: Reset the serveys list

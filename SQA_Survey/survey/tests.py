@@ -20,7 +20,7 @@ class SurveyPOSTTests(APITestCase):
             'minimum': None,
             'maximum': None
         }
-        self.url = reverse('CreateSurveyView')
+        self.url = reverse('SurveyView')
 
     # Called after executing each test
     def tearDown(self):
@@ -67,6 +67,150 @@ class SurveyPOSTTests(APITestCase):
         )
 
 
+class QuestionPOSTTests(APITestCase):
+
+    # Called before executing each test
+    def setUp(self):
+        # Creating dummy data
+        data = {
+            'survey_name': 'test_dummy'
+        }
+        self.client.post(reverse('SurveyView'), data, format='json')
+
+        self.reference_data = {
+            "question": "Do you like testing ?",
+            "answers": [],
+            "average": None,
+            "standard_deviation": None,
+            "minimum": None,
+            "maximum": None
+        }
+
+        self.url = reverse('QuestionView')
+
+    # Called after executing each test
+    def tearDown(self):
+        self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
+
+    # Ensure route is working as entended
+    def test_success_create_question(self):
+        # Testing
+        data = {
+            'survey_name': 'test_dummy',
+            'question_text': 'Do you like testing ?'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, self.reference_data)
+    
+    # Ensure route returns 400 when 'survey_name' is not in param
+    def test_fail_no_param_1(self):
+        # Testing
+        data = {
+            'question_text': 'Do you like testing ?'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "'survey_name' has to be a data param"
+            }
+        )
+
+    # Ensure route returns 400 when 'question_text' is not in param
+    def test_fail_no_param_2(self):
+        # Testing
+        data = {
+            'survey_name': 'test_dummy',
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "'question_text' has to be a data param"
+            }
+        )
+
+    # Ensure route returns 400 when there is no param
+    def test_fail_no_param_3(self):
+        # Testing
+        data = {
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            'error': "'survey_name' has to be a data param"
+            }
+        )
+
+    # Ensure route returns 400 when the survey does not exist
+    def test_fail_survey_does_not_exist(self):
+        # Delete all surveys
+        self.client.delete(reverse('ResetSurveysListView'), {}, format='json')
+
+        # Testing
+        data = {
+            'survey_name': 'test_dummy',
+            'question_text': 'Do you like testing ?'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+                'error': 'survey does not exist'
+            }
+        )
+
+    # Ensure route returns 400 when the question already exist
+    def test_fail_question_already_exist(self):
+        # Creating dummy data
+        data = {
+            'survey_name': 'test_dummy',
+            'question_text': 'Do you like testing ?'
+        }
+        self.client.post(self.url, data, format='json')
+
+        # Testing
+        data = {
+            'survey_name': 'test_dummy',
+            'question_text': 'Do you like testing ?'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+                'error': 'question already exist, find a new one'
+            }
+        )
+    
+    def test_fail_max_questions_reached(self):
+        # Creating dummy data
+        questions = ['1 ?', '2 ?', '3 ?', '4 ?', '5 ?', '6 ?', '7 ?', '8 ?', '9 ?', '10 ?']
+        for question in questions:
+            data = {
+                'survey_name': 'test_dummy',
+                'question_text': question
+            }
+            reference_data = {
+                "question": question,
+                "answers": [],
+                "average": None,
+                "standard_deviation": None,
+                "minimum": None,
+                "maximum": None
+            }
+            response = self.client.post(self.url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response.data, reference_data)
+        
+        # Testing
+        data = {
+            'survey_name': 'test_dummy',
+            'question_text': 'Do you like testing ?'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+                'error': 'you cannot add another question (maximum questions = 10)'
+            }
+        )
+
 # Testing class that execute the following tests
 # - Test if DELETE works as intended
 class TestingHelpDELETETests(APITestCase):
@@ -93,7 +237,7 @@ class TestingHelpDELETETests(APITestCase):
         data = {
             'survey_name': 'test_dummy'
         }
-        response = self.client.post(reverse('CreateSurveyView'), data, format='json')
+        response = self.client.post(reverse('SurveyView'), data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data, self.reference_data)
 
